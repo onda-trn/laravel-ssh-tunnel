@@ -1,4 +1,6 @@
-<?php namespace STS\Tunneler\Jobs;
+<?php
+
+namespace STS\Tunneler\Jobs;
 
 class CreateTunnel
 {
@@ -8,6 +10,12 @@ class CreateTunnel
      * @var string
      */
     protected $ncCommand;
+
+    /**
+     * The command for creating the tunnel
+     * @var string
+     */
+    protected $bashCommand;
 
     /**
      * The command for creating the tunnel
@@ -24,26 +32,29 @@ class CreateTunnel
     public function __construct()
     {
 
-        $this->ncCommand = sprintf('%s -vz %s %d  > /dev/null 2>&1',
+        $this->ncCommand = sprintf(
+            '%s -vz %s %d  > /dev/null 2>&1',
             config('tunneler.nc_path'),
             config('tunneler.local_address'),
             config('tunneler.local_port')
         );
 
-        $this->bashCommand = sprintf('timeout 1 %s -c \'cat < /dev/null > /dev/tcp/%s/%d\' > /dev/null 2>&1',
+        $this->bashCommand = sprintf(
+            'timeout 1 %s -c \'cat < /dev/null > /dev/tcp/%s/%d\' > /dev/null 2>&1',
             config('tunneler.bash_path'),
             config('tunneler.local_address'),
             config('tunneler.local_port')
         );
 
-        $this->sshCommand = sprintf('%s %s %s -N -i %s -L %d:%s:%d -p %d %s@%s',
+        $this->sshCommand = sprintf(
+            '%s %s -L %s:%s:%s:%d -N -i %s -p %d %s@%s',
             config('tunneler.ssh_path'),
             config('tunneler.ssh_options'),
-            config('tunneler.ssh_verbosity'),
-            config('tunneler.identity_file'),
+            config('tunneler.local_address'),
             config('tunneler.local_port'),
             config('tunneler.bind_address'),
             config('tunneler.bind_port'),
+            config('tunneler.identity_file'),
             config('tunneler.port'),
             config('tunneler.user'),
             config('tunneler.hostname')
@@ -69,8 +80,10 @@ class CreateTunnel
             usleep(config('tunneler.wait'));
         }
 
-        throw new \ErrorException(sprintf("Could Not Create SSH Tunnel with command:\n\t%s\nCheck your configuration.",
-            $this->sshCommand));
+        throw new \ErrorException(sprintf(
+            "Could Not Create SSH Tunnel with command:\n\t%s\nCheck your configuration.",
+            $this->sshCommand
+        ));
     }
 
 
@@ -79,7 +92,8 @@ class CreateTunnel
      */
     protected function createTunnel()
     {
-        $this->runCommand(sprintf('%s %s >> %s 2>&1 &',
+        $this->runCommand(sprintf(
+            '%s %s >> %s 2>&1 &',
             config('tunneler.nohup_path'),
             $this->sshCommand,
             config('tunneler.nohup_log')
@@ -105,9 +119,10 @@ class CreateTunnel
      * Use pkill to kill the SSH tunnel
      */
 
-    public function destroyTunnel(){
-        $ssh_command = preg_replace('/[\s]{2}[\s]*/',' ',$this->sshCommand);
-        return $this->runCommand('pkill -f "'.$ssh_command.'"');
+    public function destroyTunnel()
+    {
+        $ssh_command = preg_replace('/[\s]{2}[\s]*/', ' ', $this->sshCommand);
+        return $this->runCommand('pkill -f "' . $ssh_command . '"');
     }
 
     /**
@@ -121,6 +136,4 @@ class CreateTunnel
         exec($command, $this->output, $return_var);
         return (bool)($return_var === 0);
     }
-
-
 }
