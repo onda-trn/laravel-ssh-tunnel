@@ -68,6 +68,7 @@ class CreateTunnel
             return 1;
         }
 
+        echo (' createTunnel');
         $this->createTunnel();
 
         $tries = config('tunneler.tries');
@@ -92,6 +93,7 @@ class CreateTunnel
      */
     protected function createTunnel()
     {
+        echo 'createTunnel';
         $this->runCommand(sprintf(
             '%s %s >> %s 2>&1 &',
             config('tunneler.nohup_path'),
@@ -109,6 +111,7 @@ class CreateTunnel
     protected function verifyTunnel()
     {
         if (config('tunneler.verify_process') == 'bash') {
+            echo ' verifyTunnel Start';
             return $this->runCommand($this->bashCommand);
         }
 
@@ -132,8 +135,10 @@ class CreateTunnel
      */
     protected function runCommand($command)
     {
+        echo ' runCommand';
         $return_var = 1;
         exec($command, $this->output, $return_var);
+        echo ' runCommand2';
         return (bool)($return_var === 0);
     }
 }
