@@ -135,10 +135,12 @@ class CreateTunnel
      */
     protected function runCommand($command)
     {
-        echo ' runCommand';
+        echo ' runCommand ';
         $return_var = 1;
         exec($command, $this->output, $return_var);
-        echo ' runCommand2';
+        echo var_dump($this->output);
+        echo ' runCommand2 ';
+        echo "\n" . $return_var;
         return (bool)($return_var === 0);
     }
 }
