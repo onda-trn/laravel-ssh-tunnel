@@ -110,6 +110,7 @@ class CreateTunnel
      */
     protected function verifyTunnel()
     {
+        if (config('tunneler.verify_process') == 'skip') return true;
         if (config('tunneler.verify_process') == 'bash') {
             echo "\n" . 'verifyTunnel Start';
             echo "\n" . $this->bashCommand;
