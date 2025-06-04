@@ -127,11 +127,34 @@ $app->get('/mysql_tunnel', function () use ($app) {
 });
 
 ```
+## 動作フロー
 
-## How Does it Work?
-It first uses netcat (`nc`) via `exec` to check the local port to see if the tunnel is open. If the port is there, it does nothing else.
+`CreateTunnel`ジョブが実行されると:
 
-If the port isn't there, it then creates the ssh tunnel connection command and executes that via `exec` after execution we wait the defined `TUNNELER_CONN_WAIT` time before running netcat again to verify that the connection is in place.
+1. **初期化**:
+   - 設定に基づいて3つのコマンドを生成:
+     - `ncCommand`: Netcatベースのトンネル検証コマンド
+     - `bashCommand`: Bashベースのトンネル検証コマンド
+     - `sshCommand`: SSHトンネル作成コマンド
 
-That's it. The tunnel will stay up until it times out, if it times out, and depending on the strategy you have chosen to ensure it is up and available when you need it, it will simply be recreated on demand.
+2. **トンネル検証**:
+   - 設定された方法で既存トンネルの存在を確認:
+     - `skip`: 検証をスキップ
+     - `bash`: bashコマンドを使用（nmap-ncatを使用するシステム向け）
+     - `nc`: netcatコマンドを使用（デフォルト）
+   - トンネルが存在する場合、ジョブは即時終了
+
+3. **トンネル作成**:
+   - `nohup`を使用してSSHトンネルコマンドをバックグラウンド実行
+   - 接続のために短時間待機（`TUNNELER_CONN_WAIT`で設定可能）
+
+4. **検証ループ**:
+   - 最大`TUNNELER_CONN_TRIES`回までトンネル検証をリトライ
+   - 各試行間で`TUNNELER_CONN_WAIT`マイクロ秒待機
+   - 成功した場合、ジョブは終了
+
+5. **失敗処理**:
+   - 全ての検証試行が失敗した場合、詳細を含む例外をスロー
+   - デバッグ用に失敗したSSHコマンドを含む
+
 
